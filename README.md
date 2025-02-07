@@ -1,7 +1,7 @@
-# Reconocimiento_Emociones
-Pyhton script with a neuronal network to recognize emotions
 # Reconocimiento_Emociones by Jorge Gil
 Pyhton script with a neuronal network to recognize emotions
+
+Note: you should have installed opencv on your machine and obviously you should have a video camera.
 
 🔍 Resumen del funcionamiento del script
 Este script esta diseñado para:
