@@ -9,7 +9,7 @@ import cv2
 import os
 import imutils
 import numpy as np
-dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
+dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Reconocimiento_Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
 def captura_de_emociones(emotionName):
     #dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
     emotionsPath = dataPath + '/' + emotionName
