@@ -9,41 +9,42 @@ import cv2
 import os
 import imutils
 import numpy as np
-dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Reconocimiento_Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
+dataPath = 'C:/Users/Python Scripts/Reconocimieno de Emociones/Reconocimiento_Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
 def captura_de_emociones(emotionName):
-    #dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
-    emotionsPath = dataPath + '/' + emotionName
+    emotionsPath = os.path.join(dataPath, emotionName)
 
     if not os.path.exists(emotionsPath):
-    	print('Carpeta creada: ',emotionsPath)
-    	os.makedirs(emotionsPath)
+        print(f'Carpeta creada: {emotionsPath}')
+        os.makedirs(emotionsPath)
 
-    cap = cv2.VideoCapture(0,cv2.CAP_DSHOW)
-
-    faceClassif = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_default.xml')
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    faceClassif = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     count = 0
 
     while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-    	ret, frame = cap.read()
-    	if ret == False: break
-    	frame =  imutils.resize(frame, width=640)
-    	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    	auxFrame = frame.copy()
+        frame = imutils.resize(frame, width=640)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        auxFrame = frame.copy()
 
-    	faces = faceClassif.detectMultiScale(gray,1.3,5)
+        faces = faceClassif.detectMultiScale(gray, 1.3, 5)
 
-    	for (x,y,w,h) in faces:
-    		cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
-    		rostro = auxFrame[y:y+h,x:x+w]
-    		rostro = cv2.resize(rostro,(150,150),interpolation=cv2.INTER_CUBIC)
-    		cv2.imwrite(emotionsPath + '/rotro_{}.jpg'.format(count),rostro)
-    		count = count + 1
-    	cv2.imshow(emotionName,frame)
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            rostro = auxFrame[y:y + h, x:x + w]
+            rostro = cv2.resize(rostro, (150, 150), interpolation=cv2.INTER_CUBIC)
+            rostro = cv2.cvtColor(rostro, cv2.COLOR_BGR2GRAY)  # Convertir a escala de grises
+            cv2.imwrite(os.path.join(emotionsPath, f'rostro_{count}.jpg'), rostro)
+            count = count + 1
 
-    	k =  cv2.waitKey(1)
-    	if k == 27 or count >= 30:
-    		break
+        cv2.imshow(emotionName, frame)
+
+        k = cv2.waitKey(1)
+        if k == 47 or count >= 50:  # ESC o 30 imágenes capturadas
+            break
 
     cap.release()
     cv2.destroyAllWindows()
@@ -53,45 +54,50 @@ def obtenerModelo(method,facesData,labels):
 	if method == 'FisherFaces': emotion_recognizer = cv2.face.FisherFaceRecognizer_create()
 	if method == 'LBPH': emotion_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
-	# Entrenando el reconocedor de rostros
 	print("Entrenando ( "+method+" )...")
 	inicio = time.time()
 	emotion_recognizer.train(facesData, np.array(labels))
 	tiempoEntrenamiento = time.time()-inicio
 	print("Tiempo de entrenamiento ( "+method+" ): ", tiempoEntrenamiento)
 
-	# Almacenando el modelo obtenido
 	emotion_recognizer.write("modelo"+method+".xml")
 
 def entrenamiento():
-    #dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
     emotionsList = os.listdir(dataPath)
-    print('Lista de emociones: ', emotionsList)
+    print('Lista de emociones:', emotionsList)
     labels = []
     facesData = []
     label = 0
+
     for nameDir in emotionsList:
-    	emotionsPath = dataPath + '/' + nameDir
-    	for fileName in os.listdir(emotionsPath):
-    		print('Rostros: ', nameDir + '/' + fileName)
-    		labels.append(label)
-    		facesData.append(cv2.imread(emotionsPath+'/'+fileName,0))
-    		image = cv2.imread(emotionsPath+'/'+fileName,0)
-    #		cv2.imshow('image',image)
-    	label = label + 1
+        emotionsPath = os.path.join(dataPath, nameDir)
+
+        for fileName in os.listdir(emotionsPath):
+            imgPath = os.path.join(emotionsPath, fileName)
+            print('Procesando imagen:', imgPath)
+            image = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE)
+            if image is None:
+                print(f"Advertencia: No se pudo cargar la imagen {imgPath}.")
+                continue
+            image = cv2.resize(image, (150, 150), interpolation=cv2.INTER_CUBIC)
+            facesData.append(image)
+            labels.append(label)
+
+        label = label + 1
+
     cv2.destroyAllWindows()
-    obtenerModelo('EigenFaces',facesData,labels)
-    obtenerModelo('FisherFaces',facesData,labels)
-    obtenerModelo('LBPH',facesData,labels)
+    obtenerModelo('EigenFaces', facesData, labels)
+    obtenerModelo('FisherFaces', facesData, labels)
+    obtenerModelo('LBPH', facesData, labels)
 
 def emotionImage(emotion):
 	# Emojis
-    if emotion == 'Felicidad': image = cv2.imread('Emojis/felicidad.jpeg')
-    if emotion == 'Enojo': image = cv2.imread('Emojis/enojo.jpeg')
-    if emotion == 'Sorpresa': image = cv2.imread('Emojis/sorpresa.jpeg')
-    if emotion == 'Tristeza': image = cv2.imread('Emojis/tristeza.jpeg')
-    if emotion == 'Asco': image = cv2.imread('Emojis/asco.jpeg')
-    if emotion == 'Neutral': image = cv2.imread('Emojis/Neutral.jpeg')
+    if emotion == 'Felicidad': image = cv2.imread('Data/Emojis/felicidad.jpeg') #Verifica donde tienes la carpeta de emojis
+    if emotion == 'Enojo': image = cv2.imread('Data/Emojis/enojo.jpeg')
+    if emotion == 'Sorpresa': image = cv2.imread('Data/Emojis/sorpresa.jpeg')
+    if emotion == 'Tristeza': image = cv2.imread('Data/Emojis/tristeza.jpeg')
+    if emotion == 'Asco': image = cv2.imread('Data/Emojis/asco.jpeg')
+    if emotion == 'Neutral': image = cv2.imread('Data/Emojis/Neutral.jpeg')
     return image
 
 
@@ -99,7 +105,6 @@ choice=input('Deseas Tomar las fotos? (Y/N)\n')
 if choice=='y' or choice=='Y':
     print("Tomaremos las imagenes para entrenar el modelo:")
     lista=['Enojo','Felicidad','Sorpresa','Tristeza','Neutral','Asco']
-    #print(lista)
     time.sleep(2)
     for e in lista:
         time.sleep(2)
@@ -117,10 +122,6 @@ mod=input('Elige un metodo de entranamiento y lectura del modelo\n 1.-EigenFaces
 if mod == '1': emotion_recognizer = cv2.face.EigenFaceRecognizer_create()
 if mod == '2': emotion_recognizer = cv2.face.FisherFaceRecognizer_create()
 if mod == '3': emotion_recognizer = cv2.face.LBPHFaceRecognizer_create()
-# ----------- Métodos usados para el entrenamiento y lectura del modelo ----------
-#method = 'EigenFaces'
-#method = 'FisherFaces'
-#method = 'LBPH'
 
 if mod=='1' : 
     method = 'EigenFaces'
@@ -133,9 +134,7 @@ if mod=='3':
     emotion_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
 emotion_recognizer.read('modelo'+method+'.xml')
-# --------------------------------------------------------------------------------
 
-#dataPath = 'C:/Users/jorgil/Documents/Python Scripts/Reconocimieno de Emociones/Data' #Cambia a la ruta donde hayas almacenado Data
 imagePaths = os.listdir(dataPath)
 print('imagePaths=',imagePaths)
 
@@ -167,6 +166,13 @@ while True:
 				cv2.putText(frame,'{}'.format(imagePaths[result[0]]),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
 				image = emotionImage(imagePaths[result[0]])
+				if image is not None:
+					image = cv2.resize(image, (300, frame.shape[0]))
+					if len(image.shape) == 2:  
+						image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+					nFrame = cv2.hconcat([frame, image])
+				else:
+					nFrame = cv2.hconcat([frame, np.zeros((frame.shape[0], 300, 3), dtype=np.uint8)])
 				nFrame = cv2.hconcat([frame,image])
 			else:
 				cv2.putText(frame,'No identificado',(x,y-20),2,0.8,(0,0,255),1,cv2.LINE_AA)
@@ -179,6 +185,13 @@ while True:
 				cv2.putText(frame,'{}'.format(imagePaths[result[0]]),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
 				image = emotionImage(imagePaths[result[0]])
+                if image is not None:
+					image = cv2.resize(image, (300, frame.shape[0]))
+					if len(image.shape) == 2:  
+						image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+					nFrame = cv2.hconcat([frame, image])
+				else:
+					nFrame = cv2.hconcat([frame, np.zeros((frame.shape[0], 300, 3), dtype=np.uint8)])
 				nFrame = cv2.hconcat([frame,image])
 			else:
 				cv2.putText(frame,'No identificado',(x,y-20),2,0.8,(0,0,255),1,cv2.LINE_AA)
@@ -191,6 +204,13 @@ while True:
 				cv2.putText(frame,'{}'.format(imagePaths[result[0]]),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
 				image = emotionImage(imagePaths[result[0]])
+                if image is not None:
+					image = cv2.resize(image, (300, frame.shape[0]))
+					if len(image.shape) == 2:  
+						image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+					nFrame = cv2.hconcat([frame, image])
+				else:
+					nFrame = cv2.hconcat([frame, np.zeros((frame.shape[0], 300, 3), dtype=np.uint8)])
 				nFrame = cv2.hconcat([frame,image])
 			else:
 				cv2.putText(frame,'No identificado',(x,y-20),2,0.8,(0,0,255),1,cv2.LINE_AA)
