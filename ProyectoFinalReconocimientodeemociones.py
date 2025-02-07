@@ -43,7 +43,7 @@ def captura_de_emociones(emotionName):
         cv2.imshow(emotionName, frame)
 
         k = cv2.waitKey(1)
-        if k == 47 or count >= 50:  # ESC o 30 imágenes capturadas
+        if k == 47 or count >= 50:  # ESC o 50 imágenes capturadas
             break
 
     cap.release()
@@ -185,7 +185,7 @@ while True:
 				cv2.putText(frame,'{}'.format(imagePaths[result[0]]),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
 				image = emotionImage(imagePaths[result[0]])
-                if image is not None:
+				if image is not None:
 					image = cv2.resize(image, (300, frame.shape[0]))
 					if len(image.shape) == 2:  
 						image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -197,14 +197,12 @@ while True:
 				cv2.putText(frame,'No identificado',(x,y-20),2,0.8,(0,0,255),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,0,255),2)
 				nFrame = cv2.hconcat([frame,np.zeros((480,300,3),dtype=np.uint8)])
-		
-		# LBPHFace
-		if method == 'LBPH':
+		if method == 'LBPH':  		# LBPHFace
 			if result[1] < 60:
 				cv2.putText(frame,'{}'.format(imagePaths[result[0]]),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
 				cv2.rectangle(frame, (x,y),(x+w,y+h),(0,255,0),2)
 				image = emotionImage(imagePaths[result[0]])
-                if image is not None:
+				if image is not None:
 					image = cv2.resize(image, (300, frame.shape[0]))
 					if len(image.shape) == 2:  
 						image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
